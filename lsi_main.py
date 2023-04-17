@@ -25,7 +25,7 @@ def load_doc(filename):
     Args:
         filename (str): path to the file
 
-    Returns:    
+    Returns:
         str: the content of the file
 
     """
@@ -38,7 +38,7 @@ def remove_stopwords(tokens):
     """Remove stopwords from a list of tokens
     Args:
         tokens (list): list of tokens
-     
+
     Returns:
     list: list of tokens without stopwords
     """
@@ -53,7 +53,7 @@ def make_trans_table(tokens):
 
     Args:
         tokens (list): list of tokens
-    
+
     Returns:
         list: list of tokens without punctuation
     """
@@ -67,7 +67,7 @@ def porter_stem(tokens):
 
     Args:
         tokens (list): list of tokens
-    
+
     Returns:
         list: list of stemmed tokens
     """
@@ -82,7 +82,7 @@ def Split_doc(doc):
 
     Args:
         doc (str): the doc to split
-    
+
     Returns:
         list: list of tokens
     """
@@ -113,7 +113,7 @@ def clean_doc(doc):
 
 def add_doc_to_vocab(filename, vocab):
     """Add all tokens in a doc to the vocab
-    Uses the clean_doc function to clean the doc 
+    Uses the clean_doc function to clean the doc
     before adding to the vocab.
     Uses the load_doc function to load the doc
 
@@ -138,10 +138,9 @@ def save_list(lines, filename):
     Args:
         lines (list): list of lines to save
         filename (str): path to the file
-    
+
     Returns:
         None
-    
     """
     data = '\n'.join(lines)
     with open(filename, 'w') as file:
@@ -168,15 +167,33 @@ def load_doc_lines(filename):
     return lines
 
 
-def doc_to_line(doc):
+def doc_to_tokens(doc):
+    """Clean a document string using the
+    a series of functions to split, stem,
+    remove punctuation and stopwords.
+
+    Args:
+        doc (str): the doc to clean
+
+    Returns:
+        list: list of cleaned tokens
+    """
     tokens = clean_doc(doc)
     return ' '.join(tokens)
 
 
 def process_docs(files):
+    """Process all docs in a directory
+
+    Args:
+        files (list): list of paths to files
+
+    Returns:
+        list: list of cleaned docs
+    """
     lines = []
     for doc in files:
-        line = doc_to_line(doc)
+        line = doc_to_tokens(doc)
         lines.append(line)
     return lines
 
@@ -192,13 +209,32 @@ def random_sample(num1, num2):
     return TrainIndex, TestIndex
 
 
-def prepare_data(train_docs, mode, vocab):
+def prepare_data(train_docs, vocab):
+    """Prepare the data for training
+
+    Args:
+        train_docs (list): list of training docs
+        vocab (set): the vocabulary to use
+
+    Returns:
+        csr_matrix: the preprocessed training data
+    """
     vectorizer = CountVectorizer(vocabulary=vocab)
     transformer = TfidfTransformer(norm='l2')
     return transformer.fit_transform(vectorizer.fit_transform(train_docs))
 
 
-def preprocess_query(review, mode, vocab):
+def preprocess_query(review, vocab):
+    """Preprocess a query
+
+    Args:
+        review (str): the query to preprocess
+        mode (str): the mode to use
+        vocab (set): the vocabulary to use
+
+    Returns:
+        csr_matrix: the preprocessed query
+    """
     tokens = clean_doc(review)
     line = ' '.join(tokens)
     vectorizer = CountVectorizer(vocabulary=vocab)
@@ -235,8 +271,17 @@ def InterplotPrecision(p=0.1, Precision=None, Recall=None):
     return max(Precision[l:(r + 1)])
 
 
-# obtain y axis for R/P curve
 def compute_RP_yaxis(Precision=None, Recall=None):
+    """compute y axis for R/P curve
+
+    Args:
+        Precision ([type], optional): [description]. Defaults to None.
+        Recall ([type], optional): [description]. Defaults to None.
+
+    Returns:
+        [type]: [description]
+    """
+
     y_axis = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
     for i in range(11):
         pInput = 0.1 * i
@@ -246,8 +291,16 @@ def compute_RP_yaxis(Precision=None, Recall=None):
     return y_axis
 
 
-# compute Recall, Precision, F1-measure
 def compute_R_P_F1(re_mark=None, QuRe_ID=None):
+    """compute Recall, Precision, F1-measure
+
+    Args:
+        re_mark ([type], optional): [description]. Defaults to None.
+        QuRe_ID ([type], optional): [description]. Defaults to None.
+
+    Returns:
+        [type]: [description]
+    """
     Recall = []
     Precision = []
     F1measure = []
@@ -267,120 +320,122 @@ def compute_R_P_F1(re_mark=None, QuRe_ID=None):
     return Recall, Precision, F1measure
 
 
-# ArRe_train_lines = load_doc_lines(f"{data_path}/Reduced_ArtsReviews_5000.txt")
+if __name__ == "__main__":
 
-ArRe_train_lines = [load_doc_lines(file)[0] for file in files]
-train_docs = process_docs(ArRe_train_lines)
-vocab = []
-for ll in train_docs:
-    tt = ll.split()
-    for ww in tt:
-        if ww not in vocab:
-            vocab.append(ww)
+    train_lines = [load_doc_lines(file)[0] for file in files]
+    train_docs = process_docs(train_lines)
+    vocab = []
+    for ll in train_docs:
+        tt = ll.split()
+        for ww in tt:
+            if ww not in vocab:
+                vocab.append(ww)
 
-Xtrain = prepare_data(train_docs, 'tfidf', vocab)
+    Xtrain = prepare_data(train_docs, vocab)
 
-trunc_SVD_model = TruncatedSVD(n_components=25)
-approx_Xtrain = trunc_SVD_model.fit_transform(Xtrain)
-print(f"Approximated Xtrain shape: {str(approx_Xtrain.shape)}")
+    trunc_SVD_model = TruncatedSVD(n_components=25)
+    approx_Xtrain = trunc_SVD_model.fit_transform(Xtrain)
+    print(f"Approximated Xtrain shape: {str(approx_Xtrain.shape)}")
 
-querys = ['The pen is good.', 'The pen is poor.']
-Top_n_reviews = 10
-for query in querys:
-    encoded_query = preprocess_query(query, 'tfidf', vocab)
-    transformed_query = trunc_SVD_model.transform(encoded_query)
-    similarities = cosine_similarity(approx_Xtrain, transformed_query)
-    indexes = np.argsort(similarities.flat)[::-1]
+    queries = ['The pen is good.', 'The pen is poor.']
+    Top_n_reviews = 10
+    for query in queries:
+        encoded_query = preprocess_query(query, vocab)
+        transformed_query = trunc_SVD_model.transform(encoded_query)
+        similarities = cosine_similarity(approx_Xtrain, transformed_query)
+        indexes = np.argsort(similarities.flat)[::-1]
 
-    print('\n' + 'Query: ' + query)
-    for i in range(Top_n_reviews):
-        print(f"Top {str(i + 1)} result:")
-        print(f"Reviews ID: {str(indexes[i])}")
-        print(ArRe_train_lines[indexes[i]])
+        print('\n' + 'Query: ' + query)
+        for i in range(Top_n_reviews):
+            print(f"Top {str(i + 1)} result:")
+            print(f"Reviews ID: {str(indexes[i])}")
+            print(train_lines[indexes[i]])
 
-queries = ['The pen is good.', 'The pen is poor.']
+    re_ID = [[]]
 
-re_ID = [[]]
+    AllRecall = []
+    AllPrecision = []
+    AllF1measure = []
+    for j, query in enumerate(queries):
+        # retrieval
+        encoded_query = preprocess_query(query, vocab)
+        transformed_query = trunc_SVD_model.transform(encoded_query)
+        similarities = cosine_similarity(approx_Xtrain, transformed_query)
 
-AllRecall = []
-AllPrecision = []
-AllF1measure = []
-for j, query in enumerate(queries):
-    # retrieval
-    encoded_query = preprocess_query(query, 'tfidf', vocab)
-    transformed_query = trunc_SVD_model.transform(encoded_query)
-    similarities = cosine_similarity(approx_Xtrain, transformed_query)
+        # rank the index
+        indexes = np.argsort(similarities.flat)[::-1]
 
-    # rank the index
-    indexes = np.argsort(similarities.flat)[::-1]
+        # Mark the relevant index
+        re_mark = []
+        for i in range(len(indexes)):
+            if (indexes[i] + 1) in re_ID[j]:
+                re_mark.append(1)
+            else:
+                re_mark.append(0)
+        # print(re_mark)
 
-    # Mark the relevant index
-    re_mark = []
-    for i in range(len(indexes)):
-        if (indexes[i] + 1) in re_ID[j]:
-            re_mark.append(1)
-        else:
-            re_mark.append(0)
-    # print(re_mark)
+        # compute Recall, Precision, F1-measure
+        Recall, Precision, F1measure = compute_R_P_F1(re_mark=re_mark,
+                                                      QuRe_ID=re_ID[j])
 
-    # compute Recall, Precision, F1-measure
-    Recall, Precision, F1measure = compute_R_P_F1(re_mark=re_mark,
-                                                  QuRe_ID=re_ID[j])
+        print('\n' + 'Query%d: ' % (j + 1) + query)
+        for i in range(10):
+            print(
+                f"Top {str(i + 1)}" + ' result: ID%d ' % (indexes[i] + 1),
+                train_lines[indexes[i]],
+            )
+        Recall = np.array(Recall)
+        Precision = np.array(Precision)
+        F1measure = np.array(F1measure)
+        # print(re_mark)
+        print("Recall@1~10: ", np.around(Recall[:10], 2))
+        print("Precision@1~10: ", np.around(Precision[:10], 2))
+        print("F1measure@1~10: ", np.around(F1measure[:10], 2))
 
-    print('\n' + 'Query%d: ' % (j + 1) + query)
-    for i in range(10):
-        print(
-            f"Top {str(i + 1)}" + ' result: ID%d ' % (indexes[i] + 1),
-            ArRe_train_lines[indexes[i]],
-        )
-    Recall = np.array(Recall)
-    Precision = np.array(Precision)
-    F1measure = np.array(F1measure)
-    # print(re_mark)
-    print("Recall@1~10: ", np.around(Recall[:10], 2))
-    print("Precision@1~10: ", np.around(Precision[:10], 2))
-    print("F1measure@1~10: ", np.around(F1measure[:10], 2))
+        # save
+        AllRecall.append(Recall)
+        AllPrecision.append(Precision)
+        AllF1measure.append(F1measure)
 
-    # save
-    AllRecall.append(Recall)
-    AllPrecision.append(Precision)
-    AllF1measure.append(F1measure)
+        # plot R/P curve
+        x_axis = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+        y_axis = compute_RP_yaxis(Precision=Precision, Recall=Recall)
+        plt.plot(x_axis,
+                 y_axis,
+                 '-bo',
+                 color="purple",
+                 label="Query%d" % (j + 1))
+        plt.xlim(0, 1)
+        plt.ylim(0, 1)
+        plt.xlabel('Recall')
+        plt.ylabel('Precision')
+        plt.title('Standard Recall/Precision Curves')
+        plt.legend()
+        plt.show()
 
-    # plot R/P curve
+    # compute average Recall, average Precision, average F1-measure
+    AllRecall = np.array(AllRecall)
+    AllPrecision = np.array(AllPrecision)
+    AllF1measure = np.array(AllF1measure)
+    AveRecall = (AllRecall[0] + AllRecall[1]) / 2
+    AvePrecision = (AllPrecision[0] + AllPrecision[1]) / 2
+    AveF1measure = (AllF1measure[0] + AllF1measure[1]) / 2
+
+    print("\nAverage Recall, average Precision, average F1-measure: ")
+    print("average Recall@1~10: ", np.around(AveRecall[:10], 2))
+    print("average Precision@1~10: ", np.around(AvePrecision[:10], 2))
+    print("average F1measure@1~10: ", np.around(AveF1measure[:10], 2))
+
+    # plot average R/P curve
     x_axis = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-    y_axis = compute_RP_yaxis(Precision=Precision, Recall=Recall)
-    plt.plot(x_axis, y_axis, '-bo', color="purple", label="Query%d" % (j + 1))
+    y_axis = compute_RP_yaxis(Precision=AvePrecision, Recall=AveRecall)
+    plt.plot(x_axis, y_axis, '-bo', color="blue", label="Average")
     plt.xlim(0, 1)
     plt.ylim(0, 1)
-    plt.xlabel('Recall')
-    plt.ylabel('Precision')
-    plt.title('Standard Recall/Precision Curves')
+    plt.xlabel('average Recall')
+    plt.ylabel('average Precision')
+    plt.title('Standard Average Recall/Precision Curves')
     plt.legend()
     plt.show()
-
-# compute average Recall, average Precision, average F1-measure
-AllRecall = np.array(AllRecall)
-AllPrecision = np.array(AllPrecision)
-AllF1measure = np.array(AllF1measure)
-AveRecall = (AllRecall[0] + AllRecall[1]) / 2
-AvePrecision = (AllPrecision[0] + AllPrecision[1]) / 2
-AveF1measure = (AllF1measure[0] + AllF1measure[1]) / 2
-
-print("\nAverage Recall, average Precision, average F1-measure: ")
-print("average Recall@1~10: ", np.around(AveRecall[:10], 2))
-print("average Precision@1~10: ", np.around(AvePrecision[:10], 2))
-print("average F1measure@1~10: ", np.around(AveF1measure[:10], 2))
-
-# plot average R/P curve
-x_axis = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-y_axis = compute_RP_yaxis(Precision=AvePrecision, Recall=AveRecall)
-plt.plot(x_axis, y_axis, '-bo', color="blue", label="Average")
-plt.xlim(0, 1)
-plt.ylim(0, 1)
-plt.xlabel('average Recall')
-plt.ylabel('average Precision')
-plt.title('Standard Average Recall/Precision Curves')
-plt.legend()
-plt.show()
 
 # %%
