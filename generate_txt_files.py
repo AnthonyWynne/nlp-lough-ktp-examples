@@ -1,4 +1,6 @@
 # %%
+"""Generate text files from the articles in a sqlite database
+"""
 import sqlalchemy
 import re
 
