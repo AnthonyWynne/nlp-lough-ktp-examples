@@ -1,0 +1,5 @@
+spacy
+sqlalchemy
+nltk
+matplotlib
+scikit-learn

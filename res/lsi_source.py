@@ -11,14 +11,6 @@ from nltk.corpus import stopwords
 from nltk.stem.porter import PorterStemmer
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 
-nltk.download('stopwords')
-
-data_path = "./data/"
-files = glob.glob(f"{data_path}*.txt")
-assert files, "No files found in data folder"
-print(f"The first 5 of {len(files)}", files[:5])
-
-
 def load_doc(filename):
     """Load a doc file into memory
 
@@ -320,8 +312,15 @@ def compute_R_P_F1(re_mark=None, QuRe_ID=None):
     return Recall, Precision, F1measure
 
 
-if __name__ == "__main__":
 
+def run_lsi():
+    nltk.download('stopwords')
+
+    data_path = "./data/"
+    files = glob.glob(f"{data_path}*.txt")
+    assert files, "No files found in data folder"
+    print(f"The first 5 of {len(files)}", files[:5])
+    
     train_lines = [load_doc_lines(file)[0] for file in files]
     train_docs = process_docs(train_lines)
     vocab = []
